@@ -1,0 +1,72 @@
+---
+title: "Machine Learning with Caret"
+author: "Dieudonne Ouedraogo"
+date: "11/15/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+We want to predict loan status based on some other characteristics
+
+###Load Data and package Caret.
+We want to predict loan status based on some other characteristics
+
+```{r message=FALSE, warning=FALSE}
+library(caret)
+library(knitr)
+library(pander)
+train<-read.csv("train_u6lujuX_CVtuZ9i.csv",stringsAsFactors = T)
+str(train)
+```
+
+###Pre-processing using Caret
+
+```{r message=FALSE, warning=FALSE}
+sum(is.na(train))
+```
+
+Next, let us use Caret to impute these missing values using KNN algorithm. We will predict these missing values based on other attributes for that row. Also, we’ll scale and center the numerical data by using the convenient preprocess() in Caret.
+
+```{r message=FALSE, warning=FALSE}
+#Imputing missing values using KNN.Also centering and scaling numerical columns
+preProcValues <- preProcess(train, method =c("knnImpute","center","scale"))
+library('RANN')
+train_processed <- predict(preProcValues, train)
+sum(is.na(train_processed))
+```
+
+It is also very easy to use one hot encoding in Caret to create dummy variables for each level of a categorical variable. But first, we’ll convert the dependent variable to numerical.
+
+```{r}
+#Converting outcome variable to numeric
+train_processed$Loan_Status<-ifelse(train_processed$Loan_Status=='N',0,1)
+
+id<-train_processed$Loan_ID
+train_processed$Loan_ID<-NULL
+
+#Checking the structure of processed train file
+str(train_processed)
+```
+
+Now, creating dummy variables using one hot encoding:
+
+```{r}
+#Converting every categorical variable to numerical using dummy variables
+dmy <- dummyVars(" ~ .", data = train_processed,fullRank = T)
+train_transformed <- data.frame(predict(dmy, newdata = train_processed))
+
+#Checking the structure of transformed train file
+str(train_transformed)
+#Converting the dependent variable back to categorical
+train_transformed$Loan_Status<-as.factor(train_transformed$Loan_Status)
+```
+
+
+
+
+
+
+
